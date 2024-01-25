@@ -46,6 +46,7 @@ You will need to use reference pages and documentation to discover necessary too
 
 ```{r}
 library(tidyverse)
+weather <- read_csv("https://lmyint.github.io/212_spring_2024/data/sfo_weather.csv")
 ```
 
 
@@ -55,6 +56,13 @@ library(tidyverse)
 ```{r}
 # Code for recreating the visualization
 # Use as many code chunks as you need to organize your work well
+
+ggplot(weather, aes(x = dateInYear)) +
+    geom_linerange(aes(ymin=RecordLow, ymax = RecordHigh), color = "#ECEBE3", linewidth=1.5) +
+    geom_linerange(aes(ymin = NormalLow, ymax = NormalHigh), color = "#C8B8BA", linewidth=1.5) +
+    geom_linerange(aes(ymin = Low, ymax = High), color = "#A90248", linewidth=1.5) + 
+    #geom_vline(xintercept = c(32, 60, 91, 121, 151, 182, 213, 244, 274, 305, 335), linetype = "dashed") + 
+    theme_classic()
 ```
 
 
