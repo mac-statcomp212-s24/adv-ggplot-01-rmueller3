@@ -46,6 +46,9 @@ You will need to use reference pages and documentation to discover necessary too
 
 ```{r}
 library(tidyverse)
+library(grid)
+library(gridExtra)
+
 weather <- read_csv("https://lmyint.github.io/212_spring_2024/data/sfo_weather.csv")
 ```
 
@@ -55,30 +58,58 @@ weather <- read_csv("https://lmyint.github.io/212_spring_2024/data/sfo_weather.c
 
 ```{r}
 month_starts <- weather %>% 
-  filter(Day == 1, Month != 1)
+  filter(Day == 1, Month != 1) %>% 
+  mutate(dayBefore = dateInYear - 1)
 
-first_days <- month_starts %>% 
-  pull(dateInYear)
+all_months <- weather %>% 
+  filter(Day == 15)
+  #pull(dateInYear)
 
+record_temp <- weather %>% 
+  filter(Record == "TRUE")
+
+record_precip <- weather %>% 
+  filter(RecordP == "TRUE")
+
+start_month <- month_starts %>% 
+  pull(dayBefore)
+
+end_month <- weather %>%  
+  filter(dateInYear %in% c(31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365))
+```
+
+
+```{r}
 temp_graph <- ggplot(weather, aes(x = dateInYear)) +
-    geom_linerange(aes(ymin=RecordLow, ymax = RecordHigh), color = "#ECEBE3", linewidth=1.5) +
-    geom_linerange(aes(ymin = NormalLow, ymax = NormalHigh), color = "#C8B8BA", linewidth=1.5) +
-    geom_linerange(aes(ymin = Low, ymax = High), color = "#A90248", linewidth=1.5) + 
-    geom_vline(data = month_starts, mapping = aes(xintercept = dateInYear), linetype = "dashed") + 
-    labs(title = "Temperature") + 
-    theme_classic()
+  geom_linerange(aes(ymin=RecordLow, ymax = RecordHigh), color = "#ECEBE3", linewidth=1.5) +
+  geom_linerange(aes(ymin = NormalLow, ymax = NormalHigh), color = "#C8B8BA", linewidth=1.5) +
+  geom_linerange(aes(ymin = Low, ymax = High), color = "#A90248", linewidth=1.5) + 
+  geom_vline(data = month_starts, mapping = aes(xintercept = dateInYear), linetype = "dashed", alpha = 0.1) + 
+  labs(title = "Temperature", y = "", x = "") + 
+  geom_point(data = record_temp, shape = 25, aes(x = dateInYear, y = High + 2), fill = "black", color =  "black")+ 
+  annotate("text", x = record_temp$dateInYear, y = record_temp$High + 15, label = record_temp$RecordText, size = 2) + 
+  scale_y_continuous(limits = c(0,115), breaks = c(0, 40, 80, 120)) +
+  scale_x_continuous(breaks = c(all_months$dateInYear), labels = month.abb, expand = c(0,0)) + 
+  theme_classic()
 temp_graph
 ```
 
 ```{r}
 precip_graph <- ggplot(weather, aes(x = dateInYear)) + 
   geom_area(data = weather, aes(y = CulmPrec, group = Month), color = "#32a3d8", fill = "#EBEAE2") + 
-  labs(title = "Precipitation")
+  geom_vline(data = month_starts, mapping = aes(xintercept = dateInYear), color = "#CDCDCD", alpha = 0.5) + 
+  labs(title = "Precipitation", y = "", x = "") + 
+  geom_point(data = record_precip, shape = 25, aes(x = dateInYear, y = CulmPrec), fill = "black", color =  "black")+
+  annotate("text", x = end_month$dateInYear, y = end_month$CulmPrec + 0.1, label = end_month$CulmPrec, size = 3) + 
+  scale_x_continuous(limits = c(0, 365), breaks = NULL, expand = c(0,0)) + 
+  scale_y_continuous(limits = c(0,8), breaks = c(4,8)) +
+  theme_classic() + 
+  theme(axis.line.x = element_blank())
 precip_graph
 ```
 
-```{r}
-grid.arrange(temp_graph, precip_graph)
+```{r, fig.width = 15}
+grid.arrange(temp_graph, precip_graph, nrow = 2, heights = c(3,1), top = "SFO Weather in 2011")
 ```
 
 
